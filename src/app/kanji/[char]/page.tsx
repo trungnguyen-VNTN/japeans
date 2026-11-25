@@ -123,9 +123,13 @@ async function KanjiDetail({ params }: { params: Params }) {
                           {inner}
                         </Link>
                       ) : (
-                        <span className="flex items-center gap-2 rounded-xl border border-dashed border-border px-3 py-2">
+                        <Link
+                          href={`/kanji/bo-thu?bo=${c.id}`}
+                          title="Tìm kanji khác có thành phần này"
+                          className="flex items-center gap-2 rounded-xl border border-dashed border-border px-3 py-2 transition-colors hover:border-primary hover:bg-muted"
+                        >
                           {inner}
-                        </span>
+                        </Link>
                       )}
                     </li>
                   );
