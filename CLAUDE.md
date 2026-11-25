@@ -30,9 +30,9 @@ Tiến độ hiện tại: `docs/PROGRESS.md` (đọc đầu phiên, cập nhậ
 
 ## Cách làm việc
 - Việc lớn (module mới, đổi schema, đổi kiến trúc): đề xuất kế hoạch (các bước, file sẽ đổi, test, rủi ro) và chờ tôi duyệt. Việc nhỏ, rõ ràng thì làm luôn.
-- Viết test cùng code và chạy trước khi báo xong; không báo "xong" khi test, lint, typecheck hoặc build còn đỏ. (Dự án chưa có test runner: thêm Vitest là việc đầu tiên của giai đoạn tiếp theo, xem PROGRESS.)
+- Viết test cùng code (Vitest, file `*.test.ts` cạnh file nguồn) và chạy trước khi báo xong; không báo "xong" khi test, lint, typecheck hoặc build còn đỏ. Logic cần test đặt trong module thuần (không import DB / Meilisearch / `next/cache`), ví dụ `src/lib/ranking.ts`.
 - Kiểm chứng giao diện thật trên trình duyệt (desktop + 375px, sáng + tối) trước khi báo xong việc UI.
-- Một tính năng một nhánh một PR khi đã có CI; commit nhỏ, thông điệp rõ. Chỉ commit / push khi tôi yêu cầu.
+- Một tính năng một nhánh một PR (CI: `.github/workflows/ci.yml` chạy lint, typecheck, test, build). Tạo PR cho việc quan trọng và để chủ repo tự merge; không tự merge. Commit nhỏ, thông điệp rõ.
 - Commit và PR chỉ đứng tên chủ repo: KHÔNG thêm `Co-Authored-By` hay bất kỳ dòng ghi công AI / Claude Code nào.
 - Không đổi phạm vi: thấy việc ngoài yêu cầu thì ghi vào `docs/PROGRESS.md` (mục "Ý tưởng / việc phát sinh") thay vì tự làm.
 - Kiến thức có thể đã cũ (Next.js 16, Prisma 7/8, Meilisearch, Tailwind 4): kiểm chứng bằng tài liệu đi kèm trong `node_modules` hoặc lệnh chỉ đọc, và nói rõ chỗ chưa chắc.
@@ -49,7 +49,8 @@ Tiến độ hiện tại: `docs/PROGRESS.md` (đọc đầu phiên, cập nhậ
 - Dev server: `npm run dev` (http://localhost:3000). Kiểm tra kết nối: `/api/health`.
 - Dữ liệu: `npm run data:download` rồi `npm run data:import` (~3 phút; gồm `data:import:kanji`, `data:import:words`, `data:index`).
 - Prisma: `npm run db:migrate -- --name <tên>`, `npm run db:generate`, `npm run db:studio`.
-- Kiểm tra đầy đủ: `npm run lint && npm run typecheck && npx next build`.
+- Test: `npm test` (một lần) hoặc `npm run test:watch`.
+- Kiểm tra đầy đủ (giống CI): `npm run lint && npm run typecheck && npm test && npx next build`.
 
 ## Định nghĩa "xong" của một giai đoạn
 Lint, typecheck, build và test xanh; đã kiểm tra trên trình duyệt theo tiêu chí trong `docs/PLAN.md`; không vi phạm nguyên tắc bất biến; `docs/PROGRESS.md` đã cập nhật.
