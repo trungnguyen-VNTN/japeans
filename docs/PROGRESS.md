@@ -13,7 +13,7 @@
 - **Giai đoạn 2 – MVP tra cứu:** trang chủ, `/tim-kiem`, `/tu/[id]`, `/kanji`, `/kanji/[char]` (hoạt ảnh nét viết, bộ Khang Hy, thành phần, từ thông dụng). Design system ở `design-system/japeans/MASTER.md`. Lint, typecheck, `next build` xanh; đã kiểm tra trên trình duyệt (desktop, 375px, sáng, tối).
 
 ### Đang dở
-- Phần giai đoạn 1–2 chưa commit (chờ chủ repo đồng ý).
+- Không có. Giai đoạn 1–2 đã commit và push lên `main` (692c93d, 5eb6a56, 58ff844).
 
 ### Bước tiếp theo
 1. Thêm Vitest + test cho `src/lib/text.ts` (hanVietOf, stripVietnamese) và `rerank()` trong `dictionary.ts`.
