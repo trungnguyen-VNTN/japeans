@@ -138,3 +138,51 @@ export async function getKanjiByGrade() {
   }
   return [...groups.entries()];
 }
+
+export type RadicalItem = { id: number; display: string; strokeCount: number; hanViet: string | null };
+
+/** RADKFILE components that appear in at least one decomposition, for the radical picker. */
+export async function getPickerRadicals(): Promise<RadicalItem[]> {
+  "use cache";
+  cacheLife("days");
+
+  return db.radical.findMany({
+    where: { usedIn: { some: {} } },
+    select: { id: true, display: true, strokeCount: true, hanViet: true },
+    orderBy: [{ strokeCount: "asc" }, { id: "asc" }],
+  });
+}
+
+const RADICAL_RESULT_LIMIT = 240;
+
+/**
+ * Kanji containing ALL given components, plus the components that can still be added
+ * (those appearing in at least one matching kanji).
+ */
+export async function findKanjiByRadicals(ids: number[]) {
+  "use cache";
+  cacheLife("days");
+
+  if (!ids.length) return { kanji: [], total: 0, available: null as number[] | null };
+
+  const matches = await db.$queryRaw<{ kanjiId: number }[]>`
+    SELECT "kanjiId" FROM "KanjiComponent"
+    WHERE "radicalId" = ANY(${ids}::int[])
+    GROUP BY "kanjiId"
+    HAVING count(*) = ${ids.length}`;
+  const kanjiIds = matches.map((m) => m.kanjiId);
+  if (!kanjiIds.length) return { kanji: [], total: 0, available: [] };
+
+  const [kanji, available] = await Promise.all([
+    db.kanji.findMany({
+      where: { id: { in: kanjiIds } },
+      select: { character: true, strokeCount: true, hanViet: true, frequency: true },
+      orderBy: [{ strokeCount: "asc" }, { frequency: { sort: "asc", nulls: "last" } }, { id: "asc" }],
+      take: RADICAL_RESULT_LIMIT,
+    }),
+    db.$queryRaw<{ radicalId: number }[]>`
+      SELECT DISTINCT "radicalId" FROM "KanjiComponent" WHERE "kanjiId" = ANY(${kanjiIds}::int[])`,
+  ]);
+
+  return { kanji, total: kanjiIds.length, available: available.map((a) => a.radicalId) };
+}

@@ -16,6 +16,12 @@ export default async function KanjiIndexPage() {
         <p className="text-muted-foreground">
           Kanji học sinh Nhật học ở tiểu học (lớp 1–6), sắp theo độ phổ biến. Chọn một chữ để xem bộ thủ và thứ tự nét.
         </p>
+        <Link
+          href="/kanji/bo-thu"
+          className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-on-primary transition-opacity hover:opacity-90"
+        >
+          Tra kanji theo bộ thủ
+        </Link>
         <nav aria-label="Chọn lớp" className="flex flex-wrap gap-2 pt-2">
           {groups.map(([grade, list]) => (
             <a
