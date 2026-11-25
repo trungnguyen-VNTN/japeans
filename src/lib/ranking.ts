@@ -11,9 +11,12 @@ type RankFields = Pick<
 >;
 
 /**
- * 2 = exact match on one form as typed, 1 = exact only after removing Vietnamese diacritics, 0 = other.
+ * 3 = exact match on one form as typed,
+ * 2 = exact only after removing Vietnamese diacritics,
+ * 1 = a Japanese form or romaji starts with the query (user still typing: たべ → たべる),
+ * 0 = other.
  */
-export function matchTier(w: RankFields, query: string): 0 | 1 | 2 {
+export function matchTier(w: RankFields, query: string): 0 | 1 | 2 | 3 {
   const q = lower(query);
   const qKana = isRomaji(q) ? toHiragana(q) : q;
   if (
@@ -25,19 +28,34 @@ export function matchTier(w: RankFields, query: string): 0 | 1 | 2 {
     w.glossVi.some((g) => lower(g) === q) ||
     w.glossEn.some((g) => lower(g) === q)
   ) {
-    return 2;
+    return 3;
   }
-  return w.hanVietPlain.includes(stripVietnamese(q)) ? 1 : 0;
+  if (w.hanVietPlain.includes(stripVietnamese(q))) return 2;
+  const startsWith = (forms: string[], prefix: string) => forms.some((f) => f.startsWith(prefix));
+  if (startsWith(w.kanji, q) || startsWith(w.kana, q) || startsWith(w.kana, qKana) || startsWith(w.romaji, q)) {
+    return 1;
+  }
+  return 0;
 }
+
+/** Length of the shortest Japanese form: among equal matches, shorter words are more basic. */
+const shortestForm = (w: RankFields) => Math.min(...[...w.kanji, ...w.kana].map((f) => f.length), 99);
 
 /**
  * Meilisearch treats array fields as one string, so a word with two readings never counts as an
- * "exact" match. Re-rank the top hits: best match tier first, then common words, then Meilisearch order.
+ * "exact" match. Re-rank the top hits: best match tier first, then common words; prefix matches are
+ * further ordered shortest first; Meilisearch order breaks remaining ties.
  */
 export function rerank<T extends RankFields>(hits: T[], query: string): T[] {
   return hits
-    .map((w, i) => ({ w, i, t: matchTier(w, query) }))
-    .sort((a, b) => b.t - a.t || Number(b.w.isCommon) - Number(a.w.isCommon) || a.i - b.i)
+    .map((w, i) => ({ w, i, t: matchTier(w, query), len: shortestForm(w) }))
+    .sort(
+      (a, b) =>
+        b.t - a.t ||
+        Number(b.w.isCommon) - Number(a.w.isCommon) ||
+        (a.t === 1 ? a.len - b.len : 0) ||
+        a.i - b.i,
+    )
     .map((x) => x.w);
 }
 
