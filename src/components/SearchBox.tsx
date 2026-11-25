@@ -1,4 +1,5 @@
 import { MagnifyingGlass } from "@phosphor-icons/react/dist/ssr";
+import { SearchInput } from "@/components/SearchInput";
 
 type Props = {
   defaultValue?: string;
@@ -6,7 +7,7 @@ type Props = {
   autoFocus?: boolean;
 };
 
-/** Plain GET form → /tim-kiem?q=… (works without JavaScript, shareable URLs). */
+/** GET form → /tim-kiem?q=… (works without JavaScript, shareable URLs) with live suggestions. */
 export function SearchBox({ defaultValue, size = "md", autoFocus }: Props) {
   const lg = size === "lg";
   return (
@@ -15,25 +16,13 @@ export function SearchBox({ defaultValue, size = "md", autoFocus }: Props) {
         Tìm từ hoặc kanji
       </label>
       <div
-        className={`flex items-center gap-2 rounded-xl border border-border bg-card shadow-sm transition-shadow focus-within:border-primary focus-within:shadow-md ${
+        className={`relative flex items-center gap-2 rounded-xl border border-border bg-card shadow-sm transition-shadow focus-within:border-primary focus-within:shadow-md ${
           lg ? "p-2" : "p-1.5"
         }`}
       >
         <MagnifyingGlass size={lg ? 24 : 20} className="ml-2 shrink-0 text-muted-foreground" aria-hidden />
-        <input
-          id="q"
-          name="q"
-          type="search"
-          defaultValue={defaultValue}
-          autoFocus={autoFocus}
-          autoComplete="off"
-          spellCheck={false}
-          placeholder="勉強, べんきょう, benkyou, học sinh, study…"
-          aria-describedby="q-help"
-          className={`min-w-0 flex-1 bg-transparent outline-none placeholder:text-muted-foreground/70 ${
-            lg ? "h-12 text-lg" : "h-10 text-base"
-          }`}
-        />
+        {/* key: reset the input when the page's query changes */}
+        <SearchInput key={defaultValue ?? ""} defaultValue={defaultValue} large={lg} autoFocus={autoFocus} />
         <button
           type="submit"
           className={`shrink-0 cursor-pointer rounded-lg bg-primary font-medium text-on-primary transition-opacity hover:opacity-90 ${
