@@ -1,0 +1,319 @@
+// Japeans data model (skeleton). See docs/PLAN.md for the module map.
+// Dictionary tables are filled by import scripts (JMdict, KANJIDIC2, KRADFILE, KanjiVG, Tatoeba).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────── Module A/B: Dictionary ─────────────
+
+model Word {
+  id         Int             @id @default(autoincrement())
+  jmdictId   Int?            @unique // ent_seq from JMdict
+  jlptLevel  Int? // 5 = N5 … 1 = N1
+  isCommon   Boolean         @default(false)
+  frequency  Int? // lower = more frequent
+  kanjiForms WordKanjiForm[]
+  readings   WordReading[]
+  senses     Sense[]
+  examples   WordExample[]
+  setCards   SetCard[]
+  createdAt  DateTime        @default(now())
+  updatedAt  DateTime        @updatedAt
+
+  @@index([jlptLevel])
+}
+
+model WordKanjiForm {
+  id       Int     @id @default(autoincrement())
+  wordId   Int
+  word     Word    @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  text     String // e.g. 勉強
+  priority Boolean @default(false)
+
+  @@index([text])
+}
+
+model WordReading {
+  id     Int     @id @default(autoincrement())
+  wordId Int
+  word   Word    @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  kana   String // e.g. べんきょう
+  romaji String
+  pitch  String? // pitch accent pattern
+
+  @@index([kana])
+  @@index([romaji])
+}
+
+model Sense {
+  id            Int      @id @default(autoincrement())
+  wordId        Int
+  word          Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  order         Int
+  partsOfSpeech String[]
+  glossEn       String[]
+  glossVi       String[] // Vietnamese meanings (AI-translated, then reviewed)
+  viReviewed    Boolean  @default(false)
+  notes         String?
+}
+
+model Example {
+  id         Int           @id @default(autoincrement())
+  tatoebaId  Int?          @unique
+  textJa     String
+  furigana   String? // ruby markup
+  textVi     String?
+  textEn     String?
+  difficulty Int? // 1..5
+  words      WordExample[]
+}
+
+model WordExample {
+  wordId    Int
+  exampleId Int
+  word      Word    @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  example   Example @relation(fields: [exampleId], references: [id], onDelete: Cascade)
+
+  @@id([wordId, exampleId])
+}
+
+// ───────────── Module C: Kanji & radicals ─────────────
+
+model Kanji {
+  id          Int              @id @default(autoincrement())
+  character   String           @unique // 学
+  onReadings  String[]
+  kunReadings String[]
+  hanViet     String[] // HỌC
+  meaningsEn  String[]
+  meaningsVi  String[]
+  strokeCount Int
+  jlptLevel   Int?
+  grade       Int? // Japanese school grade
+  frequency   Int?
+  strokeSvg   String? // KanjiVG path data
+  radicalId   Int? // classical (Kangxi) radical
+  radical     Radical?         @relation(fields: [radicalId], references: [id])
+  components  KanjiComponent[] @relation("parent")
+  usedIn      KanjiComponent[] @relation("child")
+
+  @@index([jlptLevel])
+}
+
+model Radical {
+  id          Int     @id @default(autoincrement())
+  kangxiNo    Int?    @unique // 1..214
+  character   String  @unique // 亻
+  nameVi      String? // nhân đứng
+  hanViet     String? // NHÂN
+  meaningVi   String?
+  strokeCount Int
+  kanji       Kanji[]
+}
+
+// Decomposition tree from KRADFILE / IDS — ground truth, never AI-generated.
+model KanjiComponent {
+  parentId Int
+  childId  Int
+  position Int // order in the decomposition
+  parent   Kanji @relation("parent", fields: [parentId], references: [id], onDelete: Cascade)
+  child    Kanji @relation("child", fields: [childId], references: [id], onDelete: Cascade)
+
+  @@id([parentId, childId])
+}
+
+// Cached AI output (mnemonics, nuance explanations) with review status.
+model AIContent {
+  id        Int             @id @default(autoincrement())
+  type      AIContentType
+  targetKey String // e.g. "kanji:学" or "word:123"
+  content   String
+  model     String
+  status    AIContentStatus @default(PENDING)
+  reports   Report[]
+  createdAt DateTime        @default(now())
+
+  @@unique([type, targetKey])
+}
+
+enum AIContentType {
+  KANJI_MNEMONIC
+  KANJI_EXPLANATION
+  WORD_USAGE
+  WORD_COMPARISON
+}
+
+enum AIContentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Report {
+  id          Int        @id @default(autoincrement())
+  userId      String?
+  user        User?      @relation(fields: [userId], references: [id])
+  aiContentId Int?
+  aiContent   AIContent? @relation(fields: [aiContentId], references: [id])
+  studySetId  String?
+  studySet    StudySet?  @relation(fields: [studySetId], references: [id])
+  reason      String
+  resolved    Boolean    @default(false)
+  createdAt   DateTime   @default(now())
+}
+
+// ───────────── Users ─────────────
+
+model User {
+  id         String         @id @default(cuid())
+  email      String         @unique
+  name       String?
+  image      String?
+  role       UserRole       @default(LEARNER)
+  dailyGoal  Int            @default(20)
+  streak     Int            @default(0)
+  xp         Int            @default(0)
+  studySets  StudySet[]
+  folders    Folder[]
+  progress   CardProgress[]
+  reviewLogs ReviewLog[]
+  sessions   StudySession[]
+  reports    Report[]
+  createdAt  DateTime       @default(now())
+}
+
+enum UserRole {
+  LEARNER
+  TEACHER
+  EDITOR
+  ADMIN
+}
+
+// ───────────── Module D + H: Study sets (Quizlet-style) & SRS ─────────────
+
+model StudySet {
+  id          String         @id @default(cuid())
+  ownerId     String
+  owner       User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  visibility  Visibility     @default(PRIVATE)
+  tags        String[]
+  isOfficial  Boolean        @default(false) // built-in JLPT decks
+  cloneOfId   String?
+  cloneOf     StudySet?      @relation("clones", fields: [cloneOfId], references: [id])
+  clones      StudySet[]     @relation("clones")
+  cards       SetCard[]
+  folders     FolderSet[]
+  sessions    StudySession[]
+  reports     Report[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([visibility])
+}
+
+enum Visibility {
+  PUBLIC
+  UNLISTED
+  PRIVATE
+}
+
+model SetCard {
+  id         String         @id @default(cuid())
+  setId      String
+  set        StudySet       @relation(fields: [setId], references: [id], onDelete: Cascade)
+  order      Int
+  term       String
+  reading    String?
+  definition String
+  imageUrl   String?
+  audioUrl   String?
+  wordId     Int? // optional link to the dictionary
+  word       Word?          @relation(fields: [wordId], references: [id])
+  progress   CardProgress[]
+  reviewLogs ReviewLog[]
+
+  @@index([setId, order])
+}
+
+model Folder {
+  id      String      @id @default(cuid())
+  ownerId String
+  owner   User        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name    String
+  sets    FolderSet[]
+}
+
+model FolderSet {
+  folderId String
+  setId    String
+  folder   Folder   @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  set      StudySet @relation(fields: [setId], references: [id], onDelete: Cascade)
+
+  @@id([folderId, setId])
+}
+
+// FSRS scheduling state per user per card.
+model CardProgress {
+  userId     String
+  cardId     String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card       SetCard   @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  starred    Boolean   @default(false)
+  inSrs      Boolean   @default(false)
+  state      Int       @default(0) // 0 new, 1 learning, 2 review, 3 relearning
+  stability  Float     @default(0)
+  difficulty Float     @default(0)
+  reps       Int       @default(0)
+  lapses     Int       @default(0)
+  due        DateTime  @default(now())
+  lastReview DateTime?
+
+  @@id([userId, cardId])
+  @@index([userId, due])
+}
+
+model ReviewLog {
+  id        String    @id @default(cuid())
+  userId    String
+  cardId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card      SetCard   @relation(fields: [cardId], references: [id], onDelete: Cascade)
+  mode      StudyMode
+  rating    Int // FSRS: 1 again, 2 hard, 3 good, 4 easy
+  correct   Boolean
+  elapsedMs Int?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model StudySession {
+  id         String    @id @default(cuid())
+  userId     String
+  setId      String
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  set        StudySet  @relation(fields: [setId], references: [id], onDelete: Cascade)
+  mode       StudyMode
+  score      Int?
+  durationMs Int?
+  createdAt  DateTime  @default(now())
+}
+
+enum StudyMode {
+  FLASHCARD
+  LEARN
+  WRITE
+  DICTATION
+  HANDWRITING
+  TEST
+  MATCH
+  SRS_REVIEW
+}

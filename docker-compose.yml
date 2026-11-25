@@ -1,0 +1,42 @@
+# Local dev services for Japeans. Start with: docker compose up -d
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: japeans-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: japeans
+      POSTGRES_PASSWORD: japeans_dev
+      POSTGRES_DB: japeans
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U japeans"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.12
+    container_name: japeans-meili
+    restart: unless-stopped
+    environment:
+      MEILI_MASTER_KEY: japeans_dev_master_key
+      MEILI_ENV: development
+    ports:
+      - "7700:7700"
+    volumes:
+      - meilidata:/meili_data
+
+  redis:
+    image: redis:7-alpine
+    container_name: japeans-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+
+volumes:
+  pgdata:
+  meilidata:
