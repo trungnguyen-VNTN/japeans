@@ -1,5 +1,7 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { BookOpenText, Cards, MagnifyingGlass, PenNib } from "@phosphor-icons/react/dist/ssr";
+import { AccountMenu } from "@/components/AccountMenu";
 
 const NAV = [
   { href: "/", label: "Tra từ", icon: MagnifyingGlass },
@@ -10,7 +12,7 @@ const NAV = [
 export function SiteHeader() {
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-card/90 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-5xl items-center gap-4 px-4 md:px-6">
+      <div className="mx-auto flex h-14 max-w-5xl items-center gap-2 px-4 sm:gap-4 md:px-6">
         <Link href="/" className="flex items-center gap-2 font-bold text-primary">
           <BookOpenText size={24} weight="fill" aria-hidden />
           <span className="text-lg">Japeans</span>
@@ -40,6 +42,11 @@ export function SiteHeader() {
             ),
           )}
         </nav>
+
+        {/* Reads the session cookie: streamed in so the rest of the header stays static. */}
+        <Suspense fallback={<span className="size-11" aria-hidden />}>
+          <AccountMenu />
+        </Suspense>
       </div>
     </header>
   );
