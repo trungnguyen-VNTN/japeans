@@ -1,49 +1,11 @@
 import { cacheLife } from "next/cache";
-import { isRomaji, toHiragana } from "wanakana";
 import { db } from "@/lib/db";
 import { KANJI_INDEX, meili, WORDS_INDEX, type KanjiDoc, type WordDoc } from "@/lib/search";
-import { kanjiIn, stripVietnamese } from "@/lib/text";
+import { bestHanViet, isHanVietSyllable, kanjiMatchesHanViet, rerank } from "@/lib/ranking";
+import { kanjiIn } from "@/lib/text";
 
 export type WordHit = Pick<WordDoc, "id" | "headword" | "reading" | "hanViet" | "preview" | "isCommon" | "pos">;
 export type KanjiHit = Pick<KanjiDoc, "character" | "hanViet" | "meaningsEn" | "strokeCount">;
-
-const lower = (s: string) => s.toLowerCase().normalize("NFC");
-
-/**
- * Meilisearch treats array fields as one string, so a word with two readings never counts as an
- * "exact" match. Re-rank the top hits: exact match on any single form first, then common words.
- */
-function rerank(hits: WordDoc[], query: string): WordDoc[] {
-  const q = lower(query);
-  const qPlain = stripVietnamese(q);
-  const qKana = isRomaji(q) ? toHiragana(q) : q;
-  // 2 = exact match on a form as typed, 1 = exact only after removing Vietnamese diacritics.
-  const tier = (w: WordDoc) =>
-    w.kanji.includes(q) ||
-    w.kana.includes(q) ||
-    w.kana.includes(qKana) ||
-    w.romaji.includes(q) ||
-    w.hanViet.includes(q) ||
-    w.glossVi.some((g) => lower(g) === q) ||
-    w.glossEn.some((g) => lower(g) === q)
-      ? 2
-      : w.hanVietPlain.includes(qPlain)
-        ? 1
-        : 0;
-  return hits
-    .map((w, i) => ({ w, i, t: tier(w) }))
-    .sort((a, b) => b.t - a.t || Number(b.w.isCommon) - Number(a.w.isCommon) || a.i - b.i)
-    .map((x) => x.w);
-}
-
-/** Show the Hán Việt reading the user typed (e.g. "nhật bản" rather than "nhật bổn"). */
-function bestHanViet(w: WordDoc, query: string): string[] {
-  const qPlain = stripVietnamese(lower(query));
-  const i = w.hanVietPlain.indexOf(qPlain);
-  const exact = w.hanViet.indexOf(lower(query));
-  const pick = exact >= 0 ? exact : i;
-  return pick > 0 ? [w.hanViet[pick], ...w.hanViet.filter((_, j) => j !== pick)] : w.hanViet;
-}
 
 export async function searchDictionary(query: string) {
   "use cache";
@@ -80,14 +42,10 @@ async function searchKanji(q: string): Promise<KanjiHit[]> {
     return chars.map((c) => rows.find((r) => r.character === c)).filter((r): r is KanjiHit => !!r);
   }
   // Latin / Vietnamese queries: only show kanji whose Hán Việt matches exactly (e.g. "học" → 学, 學).
-  const qPlain = stripVietnamese(lower(q));
-  if (qPlain.includes(" ") || !/^[a-z]+$/.test(qPlain)) return [];
-  const hasDiacritics = qPlain !== lower(q);
+  if (!isHanVietSyllable(q)) return [];
   const res = await meili.index<KanjiDoc>(KANJI_INDEX).search(q, { limit: 30 });
   return res.hits
-    .filter((k) =>
-      hasDiacritics ? k.hanViet.some((h) => lower(h) === lower(q)) : k.hanVietPlain.some((h) => lower(h) === qPlain),
-    )
+    .filter((k) => kanjiMatchesHanViet(k, q))
     .slice(0, 12)
     .map(({ character, hanViet, meaningsEn, strokeCount }) => ({ character, hanViet, meaningsEn, strokeCount }));
 }

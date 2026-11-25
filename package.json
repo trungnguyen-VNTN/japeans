@@ -18,7 +18,9 @@
     "data:import": "npm run data:import:kanji && npm run data:import:words && npm run data:index",
     "data:import:kanji": "tsx scripts/import/kanji.ts",
     "data:import:words": "cross-env NODE_OPTIONS=--max-old-space-size=6144 tsx scripts/import/words.ts",
-    "data:index": "cross-env NODE_OPTIONS=--max-old-space-size=6144 tsx scripts/import/search.ts"
+    "data:index": "cross-env NODE_OPTIONS=--max-old-space-size=6144 tsx scripts/import/search.ts",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
@@ -34,7 +36,7 @@
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "4.3.3",
-    "@types/node": "^20",
+    "@types/node": "^22.20.6",
     "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -44,7 +46,8 @@
     "prisma": "^7.10.1",
     "tailwindcss": "4.3.3",
     "tsx": "^4.23.15",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^5.1.1"
   },
   "allowScripts": {
     "prisma@7.10.1": true,
