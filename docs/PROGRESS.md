@@ -15,6 +15,7 @@
 ### Đang dở
 - PR `chore/vitest-ci`: Vitest (31 test cho Hán Việt, xếp hạng tìm kiếm, nhãn từ loại), tách logic xếp hạng ra `src/lib/ranking.ts`, CI GitHub Actions. Chờ chủ repo merge.
 - PR `feat/radical-search` (xếp chồng trên PR #1): trang `/kanji/bo-thu` tra kanji theo bộ thủ; thành phần không phải kanji ở trang chi tiết dẫn sang trang này.
+- PR `feat/search-autocomplete` (xếp chồng trên PR tra bộ thủ): gợi ý khi gõ ở ô tìm kiếm (`/api/goi-y`, combobox ARIA, debounce 200ms, an toàn với IME).
 
 ### Bước tiếp theo
 1. Giai đoạn 3: nghĩa tiếng Việt (dịch batch bằng AI → `Sense.glossVi`, `viReviewed = false`, ưu tiên ~10k từ thông dụng), mẹo nhớ kanji bằng AI (cache `AIContent`). Cần `ANTHROPIC_API_KEY` và ngân sách (xem câu hỏi mở).
@@ -26,6 +27,6 @@
 - Khi nào thêm đăng nhập (cần cho học phần / SRS) và dùng nhà cung cấp nào?
 
 ### Ý tưởng / việc phát sinh
-- Autocomplete khi gõ trong ô tìm kiếm (debounce + dropdown).
+- Xếp hạng gợi ý khi gõ dở: thêm bậc "khớp đầu từ" (startsWith trên kana/kanji) giữa khớp chính xác và không khớp; hiện たべ cho ベニヤ板 trước 食べる.
 - Tên gọi tiếng Việt cho bộ thủ (`Radical.nameVi`, ví dụ "nhân đứng") cần biên soạn và duyệt.
 - Âm Hán Việt của 行 đang ưu tiên "HÀNG" do theo Unihan; 時 ra "THÌ" nên 学生時代 hiện "học sinh thì đại" (đúng: "thời đại"). Cân nhắc danh sách ngoại lệ có duyệt.
