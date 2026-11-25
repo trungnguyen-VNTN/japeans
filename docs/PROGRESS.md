@@ -2,31 +2,33 @@
 
 Đọc đầu phiên, cập nhật cuối phiên. Mới nhất ở trên cùng.
 
-## Trạng thái hiện tại (2026-11-25)
+## Trạng thái hiện tại (2026-11-25, sau PR #7)
 
 ### Đã xong
-- **Test & CI (PR #1, đã merge):** Vitest, `src/lib/ranking.ts`, GitHub Actions (lint, typecheck, test, build).
-- **Giai đoạn 0 – workspace:** Next.js 16 + TS + Tailwind 4, Prisma 7 + PostgreSQL, Meilisearch, Redis (Docker), repo GitHub công khai.
-- **Giai đoạn 1 – dữ liệu:** script tải và import (`npm run data:download`, `npm run data:import`).
-  - 219.205 từ JMdict, 254.341 nghĩa, 26.485 câu ví dụ Tatoeba.
-  - 10.384 kanji KANJIDIC2; 9.865 có Hán Việt; 6.414 có thứ tự nét KanjiVG; 278 bộ / thành phần; 43.737 liên kết phân rã KRADFILE.
-  - Index Meilisearch `words`, `kanji`; tìm được bằng kanji, kana, romaji, Hán Việt (có / không dấu), tiếng Anh.
-- **Giai đoạn 2 – MVP tra cứu:** trang chủ, `/tim-kiem`, `/tu/[id]`, `/kanji`, `/kanji/[char]` (hoạt ảnh nét viết, bộ Khang Hy, thành phần, từ thông dụng). Design system ở `design-system/japeans/MASTER.md`. Lint, typecheck, `next build` xanh; đã kiểm tra trên trình duyệt (desktop, 375px, sáng, tối).
+- **Đăng nhập (PR #7):** Google qua next-auth 4.24 (bản ổn định) + Prisma adapter, session trong DB. `/dang-nhap`, `/tai-khoan`, avatar ở header. `getCurrentUser()` / `requireUser()` trong `src/lib/auth.ts`. Chưa thử Google thật (cần OAuth client).
+- **Dịch nghĩa tiếng Việt bằng AI (PR #6):** `npm run ai:translate` (sync để thử, `--mode batch` cho số lớn, `--max-usd`), lưu ở `AIContent` (`WORD_GLOSS_VI`) → `Sense.glossVi`, nhãn "AI · chưa duyệt" trên trang từ và kết quả tìm kiếm. Chưa chạy API thật.
+- **Tìm kiếm (PR #4, #5):** gợi ý khi gõ (`/api/goi-y`, combobox ARIA, an toàn với IME); xếp hạng bậc "khớp đầu từ" (`たべ` → 食べる).
+- **Tra kanji theo bộ thủ (PR #2):** `/kanji/bo-thu?bo=…`.
+- **Test & CI (PR #1):** Vitest (61 test), GitHub Actions (lint, typecheck, test, build).
+- **Giai đoạn 2 – MVP tra cứu:** trang chủ, `/tim-kiem`, `/tu/[id]`, `/kanji`, `/kanji/[char]`. Design system ở `design-system/japeans/MASTER.md`.
+- **Giai đoạn 1 – dữ liệu:** 219.205 từ JMdict, 26.485 câu ví dụ Tatoeba, 10.384 kanji (9.865 có Hán Việt, 6.414 có thứ tự nét), 43.737 liên kết phân rã KRADFILE; index Meilisearch `words`, `kanji`.
+- **Giai đoạn 0 – workspace:** Next.js 16, Prisma 7 + PostgreSQL, Meilisearch, Redis (Docker), repo GitHub công khai.
 
 ### Đang dở
-- PR `feat/radical-search` (PR #2): trang `/kanji/bo-thu` tra kanji theo bộ thủ; thành phần không phải kanji ở trang chi tiết dẫn sang trang này.
-- PR `feat/search-autocomplete` (PR #3, xếp chồng trên #2): gợi ý khi gõ ở ô tìm kiếm (`/api/goi-y`, combobox ARIA, debounce 200ms, an toàn với IME).
+- Không có PR mở.
 
 ### Bước tiếp theo
-1. Giai đoạn 3: nghĩa tiếng Việt (dịch batch bằng AI → `Sense.glossVi`, `viReviewed = false`, ưu tiên ~10k từ thông dụng), mẹo nhớ kanji bằng AI (cache `AIContent`). Cần `ANTHROPIC_API_KEY` và ngân sách (xem câu hỏi mở).
-2. Cấp JLPT N5–N1 cho từ và kanji (hiện chỉ có JLPT thang cũ của KANJIDIC). Cần chọn nguồn dữ liệu có license rõ.
+1. Chủ repo: thêm `ANTHROPIC_API_KEY`, chạy thử `npm run ai:translate -- --limit 100`, xem chất lượng / chi phí trước khi chạy ~10k từ.
+2. Chủ repo: tạo Google OAuth client, điền `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `NEXTAUTH_SECRET`, thử đăng nhập thật.
+3. Giai đoạn 4a – học phần (Module H): kế hoạch chờ duyệt.
+4. Cấp JLPT N5–N1: đề xuất nguồn Bluskyo/JLPT_Vocabulary (dữ liệu CC BY, Jonathan Waller; danh sách không chính thức), chờ duyệt.
+5. Mẹo nhớ kanji bằng AI (`AIContent` `KANJI_MNEMONIC`).
 
 ### Câu hỏi mở
-- Nguồn danh sách JLPT N-level nào chấp nhận được về license?
-- Ngân sách gọi AI để dịch nghĩa hàng loạt (số từ, model)?
-- Khi nào thêm đăng nhập (cần cho học phần / SRS) và dùng nhà cung cấp nào?
+- Dùng Bluskyo/JLPT_Vocabulary làm nguồn JLPT (hiển thị "JLPT (tham khảo)")? Trang gốc tanos.co.uk không còn truy cập được.
+- Hiển thị Hán Việt của từ: đề xuất liệt kê mọi tổ hợp âm (như Mazii) và đánh dấu "âm chính" thay vì chọn một tổ hợp. Chờ chủ repo đồng ý.
+- Ai duyệt bản dịch AI và duyệt ở đâu (cần vai trò `EDITOR` + trang duyệt)?
 
 ### Ý tưởng / việc phát sinh
-- Xếp hạng gợi ý khi gõ dở: thêm bậc "khớp đầu từ" (startsWith trên kana/kanji) giữa khớp chính xác và không khớp; hiện たべ cho ベニヤ板 trước 食べる.
 - Tên gọi tiếng Việt cho bộ thủ (`Radical.nameVi`, ví dụ "nhân đứng") cần biên soạn và duyệt.
-- Âm Hán Việt của 行 đang ưu tiên "HÀNG" do theo Unihan; 時 ra "THÌ" nên 学生時代 hiện "học sinh thì đại" (đúng: "thời đại"). Cân nhắc danh sách ngoại lệ có duyệt.
+- Thứ tự âm Hán Việt: cả KANJIDIC2 lẫn Unihan lẫn âm Nôm (強 hiện "CÀNG" trước "CƯỜNG", 時 "THÌ", 行 "HÀNG"); 勉強 thành "miễn càng". Liên quan câu hỏi mở về hiển thị Hán Việt.
