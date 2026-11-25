@@ -12,43 +12,48 @@ datasource db {
 
 // ───────────── Module A/B: Dictionary ─────────────
 
+// id = JMdict ent_seq, so imports are idempotent and URLs are stable.
 model Word {
-  id         Int             @id @default(autoincrement())
-  jmdictId   Int?            @unique // ent_seq from JMdict
-  jlptLevel  Int? // 5 = N5 … 1 = N1
+  id         Int             @id
+  jlptLevel  Int? // 5 = N5 … 1 = N1 (not in JMdict; filled later)
   isCommon   Boolean         @default(false)
-  frequency  Int? // lower = more frequent
   kanjiForms WordKanjiForm[]
   readings   WordReading[]
   senses     Sense[]
   examples   WordExample[]
   setCards   SetCard[]
-  createdAt  DateTime        @default(now())
-  updatedAt  DateTime        @updatedAt
 
   @@index([jlptLevel])
 }
 
 model WordKanjiForm {
-  id       Int     @id @default(autoincrement())
+  id       Int      @id @default(autoincrement())
   wordId   Int
-  word     Word    @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  word     Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  order    Int
   text     String // e.g. 勉強
-  priority Boolean @default(false)
+  isCommon Boolean  @default(false)
+  tags     String[] // JMdict tags: iK, ateji, rK…
 
   @@index([text])
+  @@index([wordId])
 }
 
 model WordReading {
-  id     Int     @id @default(autoincrement())
-  wordId Int
-  word   Word    @relation(fields: [wordId], references: [id], onDelete: Cascade)
-  kana   String // e.g. べんきょう
-  romaji String
-  pitch  String? // pitch accent pattern
+  id             Int      @id @default(autoincrement())
+  wordId         Int
+  word           Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  order          Int
+  kana           String // e.g. べんきょう
+  romaji         String
+  isCommon       Boolean  @default(false)
+  tags           String[]
+  appliesToKanji String[] // ["*"] = all kanji forms
+  pitch          String? // pitch accent pattern
 
   @@index([kana])
   @@index([romaji])
+  @@index([wordId])
 }
 
 model Sense {
@@ -56,16 +61,22 @@ model Sense {
   wordId        Int
   word          Word     @relation(fields: [wordId], references: [id], onDelete: Cascade)
   order         Int
-  partsOfSpeech String[]
+  partsOfSpeech String[] // JMdict tag codes: n, vs, v5u…
+  misc          String[] // uk, abbr, hon…
+  fields        String[] // comp, med…
+  info          String[]
+  related       String[] // display text of related entries
+  antonyms      String[]
   glossEn       String[]
   glossVi       String[] // Vietnamese meanings (AI-translated, then reviewed)
   viReviewed    Boolean  @default(false)
-  notes         String?
+
+  @@index([wordId])
 }
 
+// id = Tatoeba sentence id.
 model Example {
-  id         Int           @id @default(autoincrement())
-  tatoebaId  Int?          @unique
+  id         Int           @id
   textJa     String
   furigana   String? // ruby markup
   textVi     String?
@@ -75,57 +86,70 @@ model Example {
 }
 
 model WordExample {
-  wordId    Int
-  exampleId Int
-  word      Word    @relation(fields: [wordId], references: [id], onDelete: Cascade)
-  example   Example @relation(fields: [exampleId], references: [id], onDelete: Cascade)
+  wordId     Int
+  exampleId  Int
+  senseOrder Int // which sense of the word this sentence illustrates
+  form       String // the form of the word used in the sentence
+  word       Word    @relation(fields: [wordId], references: [id], onDelete: Cascade)
+  example    Example @relation(fields: [exampleId], references: [id], onDelete: Cascade)
 
   @@id([wordId, exampleId])
+  @@index([exampleId])
 }
 
 // ───────────── Module C: Kanji & radicals ─────────────
 
+// id = Unicode code point.
 model Kanji {
-  id          Int              @id @default(autoincrement())
-  character   String           @unique // 学
-  onReadings  String[]
-  kunReadings String[]
-  hanViet     String[] // HỌC
-  meaningsEn  String[]
-  meaningsVi  String[]
-  strokeCount Int
-  jlptLevel   Int?
-  grade       Int? // Japanese school grade
-  frequency   Int?
-  strokeSvg   String? // KanjiVG path data
-  radicalId   Int? // classical (Kangxi) radical
-  radical     Radical?         @relation(fields: [radicalId], references: [id])
-  components  KanjiComponent[] @relation("parent")
-  usedIn      KanjiComponent[] @relation("child")
+  id            Int              @id
+  character     String           @unique // 学
+  onReadings    String[]
+  kunReadings   String[]
+  nanori        String[]
+  hanViet       String[] // HỌC (KANJIDIC2 "vietnam", fallback Unihan kVietnamese)
+  meaningsEn    String[]
+  meaningsVi    String[]
+  strokeCount   Int
+  jlptOld       Int? // KANJIDIC2 pre-2010 JLPT level 1..4
+  jlptLevel     Int? // N-level, filled later
+  grade         Int? // school grade (1–6, 8 = secondary, 9–10 = jinmeiyō)
+  frequency     Int? // newspaper frequency rank 1..2500
+  kangxiRadical Int? // classical radical number 1..214
+  radicalId     Int?
+  radical       Radical?         @relation("classical", fields: [radicalId], references: [id])
+  strokeSvg     String? // KanjiVG stroke paths (JSON array of path d strings)
+  components    KanjiComponent[]
 
-  @@index([jlptLevel])
+  @@index([jlptOld])
+  @@index([grade])
+  @@index([frequency])
 }
 
+// Union of the 214 Kangxi radicals and the RADKFILE components.
 model Radical {
-  id          Int     @id @default(autoincrement())
-  kangxiNo    Int?    @unique // 1..214
-  character   String  @unique // 亻
-  nameVi      String? // nhân đứng
-  hanViet     String? // NHÂN
-  meaningVi   String?
+  id          Int              @id
+  character   String           @unique // RADKFILE character (may be a stand-in, e.g. 扎)
+  display     String // what to show (扎 → 扌)
+  kangxiNo    Int?             @unique // 1..214
   strokeCount Int
-  kanji       Kanji[]
+  hanViet     String? // NHÂN
+  nameVi      String? // nhân đứng (editorial)
+  meaningEn   String?
+  meaningVi   String?
+  kanji       Kanji[]          @relation("classical")
+  usedIn      KanjiComponent[]
 }
 
-// Decomposition tree from KRADFILE / IDS — ground truth, never AI-generated.
+// Decomposition from KRADFILE — ground truth, never AI-generated.
 model KanjiComponent {
-  parentId Int
-  childId  Int
-  position Int // order in the decomposition
-  parent   Kanji @relation("parent", fields: [parentId], references: [id], onDelete: Cascade)
-  child    Kanji @relation("child", fields: [childId], references: [id], onDelete: Cascade)
+  kanjiId   Int
+  radicalId Int
+  position  Int
+  kanji     Kanji   @relation(fields: [kanjiId], references: [id], onDelete: Cascade)
+  radical   Radical @relation(fields: [radicalId], references: [id], onDelete: Cascade)
 
-  @@id([parentId, childId])
+  @@id([kanjiId, radicalId])
+  @@index([radicalId])
 }
 
 // Cached AI output (mnemonics, nuance explanations) with review status.

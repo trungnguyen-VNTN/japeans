@@ -13,16 +13,24 @@
     "db:generate": "prisma generate --config prisma7.config.ts",
     "db:migrate": "prisma migrate dev --config prisma7.config.ts",
     "db:studio": "prisma studio --config prisma7.config.ts",
-    "postinstall": "prisma generate --config prisma7.config.ts"
+    "postinstall": "prisma generate --config prisma7.config.ts",
+    "data:download": "node scripts/download-data.mjs",
+    "data:import": "npm run data:import:kanji && npm run data:import:words && npm run data:index",
+    "data:import:kanji": "tsx scripts/import/kanji.ts",
+    "data:import:words": "cross-env NODE_OPTIONS=--max-old-space-size=6144 tsx scripts/import/words.ts",
+    "data:index": "cross-env NODE_OPTIONS=--max-old-space-size=6144 tsx scripts/import/search.ts"
   },
   "dependencies": {
+    "@phosphor-icons/react": "^2.1.10",
     "@prisma/adapter-pg": "^7.10.1",
     "@prisma/client": "^7.10.1",
     "dotenv": "^18.0.10",
+    "meilisearch": "^0.63.0",
     "next": "16.4.6",
     "pg": "^8.23.1",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "wanakana": "^5.3.1"
   },
   "devDependencies": {
     "@tailwindcss/turbopack": "4.3.3",
@@ -30,6 +38,7 @@
     "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "cross-env": "^10.1.0",
     "eslint": "^9",
     "eslint-config-next": "16.4.6",
     "prisma": "^7.10.1",

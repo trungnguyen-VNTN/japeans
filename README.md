@@ -11,6 +11,8 @@ npm install
 cp .env.example .env        # nếu chưa có .env
 npm run services:up         # Postgres + Meilisearch + Redis
 npm run db:migrate          # áp dụng migration
+npm run data:download       # tải JMdict, KANJIDIC2, KRADFILE, KanjiVG, Unihan (~45 MB)
+npm run data:import         # nạp vào Postgres + dựng index Meilisearch (~3 phút)
 npm run dev                 # http://localhost:3000
 ```
 
