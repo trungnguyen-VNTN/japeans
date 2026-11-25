@@ -3,11 +3,11 @@
  * WordReading / Sense, and the Tatoeba sentences it links into Example / WordExample.
  *
  * Re-runnable: child tables are rebuilt; Word rows are kept (study cards reference them)
- * and only inserted when new.
+ * and only inserted when new. Vietnamese meanings live in AIContent and are re-applied.
  */
 import { toRomaji } from "wanakana";
 import type { Prisma } from "../../src/generated/prisma/client";
-import { db, findRaw, insertChunked, readJson, run } from "./lib";
+import { applyGlossVi, db, findRaw, insertChunked, readJson, run, storedGlossVi } from "./lib";
 
 type Xref = [string, string?, number?] | [string, number?];
 type JmWord = {
@@ -100,6 +100,11 @@ async function main() {
   await insertChunked("examples", [...examples.values()], (rows) => db.example.createMany({ data: rows }));
   await insertChunked("example links", [...links.values()], (rows) => db.wordExample.createMany({ data: rows }));
 
+  // Re-apply Vietnamese meanings kept in AIContent (Sense was rebuilt above).
+  const glossVi = await storedGlossVi();
+  await applyGlossVi(glossVi);
+
+  console.log(`Vietnamese meanings re-applied to ${glossVi.length} senses`);
   console.log(`Words ${wordRows.length}, senses ${senseRows.length}, examples ${examples.size}`);
 }
 

@@ -21,7 +21,7 @@ export function SiteFooter() {
           </a>{" "}
           (CC BY 2.0 FR) · Unicode Unihan.
         </p>
-        <p>Nghĩa tiếng Việt đang được biên soạn; hiện hiển thị nghĩa tiếng Anh gốc.</p>
+        <p>Nghĩa tiếng Việt đang được biên soạn: phần có nhãn “AI” do AI dịch từ nghĩa tiếng Anh và chưa được kiểm tra; từ chưa có bản dịch hiển thị nghĩa tiếng Anh gốc.</p>
       </div>
     </footer>
   );

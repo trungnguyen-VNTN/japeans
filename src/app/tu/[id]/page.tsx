@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Quotes } from "@phosphor-icons/react/dist/ssr";
+import { AiBadge } from "@/components/AiBadge";
 import { CommonBadge } from "@/components/CommonBadge";
 import { getWord } from "@/lib/dictionary";
 import { miscLabel, posLabels } from "@/lib/labels";
@@ -103,7 +104,9 @@ async function WordDetail({ params }: { params: Params }) {
           <h2 id="senses" className="text-xl font-semibold text-card-foreground">
             Nghĩa
           </h2>
-          <p className="text-xs text-muted-foreground">Nghĩa tiếng Việt đang được biên soạn</p>
+          {!w.senses.some((s) => s.glossVi.length) && (
+            <p className="text-xs text-muted-foreground">Nghĩa tiếng Việt đang được biên soạn</p>
+          )}
         </div>
         <ol className="space-y-4">
           {w.senses.map((s) => {
@@ -125,9 +128,21 @@ async function WordDetail({ params }: { params: Params }) {
                     </span>
                   ))}
                 </div>
-                <p className="mt-3 text-lg text-card-foreground">
-                  {s.glossVi.length ? s.glossVi.join("; ") : s.glossEn.join("; ")}
-                </p>
+                {s.glossVi.length > 0 ? (
+                  <>
+                    <p className="mt-3 text-lg text-card-foreground">
+                      {s.glossVi.join("; ")} {!s.viReviewed && <AiBadge />}
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      <span className="sr-only">Nghĩa tiếng Anh: </span>
+                      <span lang="en">{s.glossEn.join("; ")}</span>
+                    </p>
+                  </>
+                ) : (
+                  <p className="mt-3 text-lg text-card-foreground" lang="en">
+                    {s.glossEn.join("; ")}
+                  </p>
+                )}
                 {s.info.length > 0 && <p className="mt-1 text-sm text-muted-foreground">{s.info.join("; ")}</p>}
                 {(s.related.length > 0 || s.antonyms.length > 0) && (
                   <p className="mt-2 text-sm text-muted-foreground">

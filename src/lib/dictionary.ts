@@ -4,7 +4,7 @@ import { KANJI_INDEX, meili, WORDS_INDEX, type KanjiDoc, type WordDoc } from "@/
 import { bestHanViet, isHanVietSyllable, kanjiMatchesHanViet, rerank } from "@/lib/ranking";
 import { kanjiIn } from "@/lib/text";
 
-export type WordHit = Pick<WordDoc, "id" | "headword" | "reading" | "hanViet" | "preview" | "isCommon" | "pos">;
+export type WordHit = Pick<WordDoc, "id" | "headword" | "reading" | "hanViet" | "preview" | "aiPreview" | "isCommon" | "pos">;
 export type KanjiHit = Pick<KanjiDoc, "character" | "hanViet" | "meaningsEn" | "strokeCount">;
 
 export async function searchDictionary(query: string) {
@@ -27,6 +27,7 @@ export async function searchDictionary(query: string) {
       reading: w.reading,
       hanViet: bestHanViet(w, q),
       preview: w.preview,
+      aiPreview: w.aiPreview ?? false,
       isCommon: w.isCommon,
       pos: w.pos,
     }));
