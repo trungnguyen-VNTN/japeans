@@ -8,7 +8,8 @@ Tiến độ hiện tại: `docs/PROGRESS.md` (đọc đầu phiên, cập nhậ
 - Stack: Next.js 16 (App Router, `src/`, Cache Components bật), React 19, TypeScript, Tailwind CSS 4. Icon: Phosphor.
 - DB: PostgreSQL 17 qua Prisma **7** (driver adapter `@prisma/adapter-pg`). Client sinh vào `src/generated/prisma` (gitignore); dùng client chung `@/lib/db`. Không nâng lên Prisma 8 (đang RC, CLI khác).
 - Tìm kiếm: Meilisearch; cache / giới hạn tần suất AI: Redis. Tất cả trong `docker-compose.yml`.
-- AI: Anthropic API (`ANTHROPIC_API_KEY`), đưa vào từ giai đoạn 3 (Module B/C). Model ID lấy từ cấu hình.
+- AI: Anthropic API qua `@anthropic-ai/sdk` (`ANTHROPIC_API_KEY`); model ID lấy từ `JAPEANS_AI_MODEL`, bảng giá trong `src/lib/translation.ts`.
+- Đăng nhập: next-auth **4** (bản ổn định; v5 còn beta) + `@next-auth/prisma-adapter`, Google OAuth, session trong DB. Đọc người dùng bằng `getCurrentUser()` / `requireUser()` (`src/lib/auth.ts`), luôn trong `<Suspense>`.
 - Dữ liệu mở: JMdict, KANJIDIC2, RADKFILE/KRADFILE (EDRDG, CC BY-SA 4.0), KanjiVG (CC BY-SA 3.0), Tatoeba (CC BY 2.0 FR), Unicode Unihan. Trang nào dùng dữ liệu phải giữ phần ghi nguồn ở footer.
 - Repo công khai: github.com/trungnguyen-VNTN/japeans, nhánh chính `main`.
 
@@ -26,7 +27,9 @@ Tiến độ hiện tại: `docs/PROGRESS.md` (đọc đầu phiên, cập nhậ
 - Mọi truy vấn từ điển đặt trong `src/lib/dictionary.ts`. Meilisearch coi mảng là một chuỗi, nên thứ tự "khớp chính xác" do `rerank()` quyết định; giữ hàm này khi đổi cấu hình index.
 - Sau khi sửa `prisma/schema.prisma`: `npm run db:migrate -- --name <tên>` (đã kèm `--config prisma7.config.ts`) rồi chạy lại import nếu bảng từ điển đổi.
 - Học phần (Module H) và SRS (Module D) dùng chung một mô hình thẻ: `SetCard` + `CardProgress` (trạng thái FSRS) + `ReviewLog`.
-- Route: `/` trang chủ, `/tim-kiem?q=` tìm kiếm, `/tu/[id]` (id = JMdict ent_seq), `/kanji`, `/kanji/[char]`.
+- Route: `/` trang chủ, `/tim-kiem?q=` tìm kiếm, `/tu/[id]` (id = JMdict ent_seq), `/kanji`, `/kanji/[char]`, `/kanji/bo-thu?bo=` tra theo bộ thủ, `/dang-nhap`, `/tai-khoan`; API `/api/goi-y?q=` (gợi ý), `/api/auth/*`, `/api/health`.
+- Bản dịch AI: nguồn là `AIContent` (`WORD_GLOSS_VI`), được chép vào `Sense.glossVi`; `data:import:words` áp lại sau khi nạp lại `Sense`.
+- Thư viện gọi `crypto.randomBytes` / đọc cookie (next-auth) phải chạy sau `await connection()` để Cache Components không prerender.
 
 ## Cách làm việc
 - Việc lớn (module mới, đổi schema, đổi kiến trúc): đề xuất kế hoạch (các bước, file sẽ đổi, test, rủi ro) và chờ tôi duyệt. Việc nhỏ, rõ ràng thì làm luôn.
@@ -49,6 +52,7 @@ Tiến độ hiện tại: `docs/PROGRESS.md` (đọc đầu phiên, cập nhậ
 - Dịch vụ local (cần Docker Desktop): `npm run services:up` / `npm run services:down`.
 - Dev server: `npm run dev` (http://localhost:3000). Kiểm tra kết nối: `/api/health`.
 - Dữ liệu: `npm run data:download` rồi `npm run data:import` (~3 phút; gồm `data:import:kanji`, `data:import:words`, `data:index`).
+- Dịch nghĩa bằng AI: `npm run ai:translate -- --limit 100` (thử), `--mode batch` (giá 50%), `--collect <batch_id>`, `--max-usd <n>`. Tốn tiền: chỉ chạy khi chủ repo yêu cầu.
 - Prisma: `npm run db:migrate -- --name <tên>`, `npm run db:generate`, `npm run db:studio`.
 - Test: `npm test` (một lần) hoặc `npm run test:watch`.
 - Kiểm tra đầy đủ (giống CI): `npm run lint && npm run typecheck && npm test && npx next build`.
