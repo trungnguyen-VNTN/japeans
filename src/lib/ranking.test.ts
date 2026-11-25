@@ -23,29 +23,37 @@ function word(headword: string, fields: Partial<Doc> = {}): Doc {
 const heads = (docs: Doc[]) => docs.map((d) => d.headword);
 
 describe("matchTier", () => {
-  it("is 2 for an exact form, including one of several readings", () => {
+  it("is 3 for an exact form, including one of several readings", () => {
     const nihon = word("日本", { kana: ["にほん", "にっぽん"] });
-    expect(matchTier(nihon, "にっぽん")).toBe(2);
-    expect(matchTier(nihon, "日本")).toBe(2);
+    expect(matchTier(nihon, "にっぽん")).toBe(3);
+    expect(matchTier(nihon, "日本")).toBe(3);
   });
 
   it("converts romaji to kana before comparing", () => {
-    expect(matchTier(word("食べる", { kana: ["たべる"] }), "taberu")).toBe(2);
+    expect(matchTier(word("食べる", { kana: ["たべる"] }), "taberu")).toBe(3);
   });
 
   it("compares glosses case-insensitively", () => {
-    expect(matchTier(word("勉強", { glossEn: ["Study"] }), "study")).toBe(2);
+    expect(matchTier(word("勉強", { glossEn: ["Study"] }), "study")).toBe(3);
   });
 
-  it("is 1 when Hán Việt only matches without diacritics", () => {
+  it("is 2 when Hán Việt only matches without diacritics", () => {
     const ippan = word("一般", { hanViet: ["nhất bàn"] });
-    expect(matchTier(ippan, "nhat ban")).toBe(1);
-    expect(matchTier(ippan, "nhật bản")).toBe(1);
-    expect(matchTier(ippan, "nhất bàn")).toBe(2);
+    expect(matchTier(ippan, "nhat ban")).toBe(2);
+    expect(matchTier(ippan, "nhật bản")).toBe(2);
+    expect(matchTier(ippan, "nhất bàn")).toBe(3);
   });
 
-  it("is 0 for partial matches", () => {
-    expect(matchTier(word("勉強中", { kana: ["べんきょうちゅう"] }), "べんきょう")).toBe(0);
+  it("is 1 when a Japanese form or romaji starts with the query", () => {
+    expect(matchTier(word("勉強中", { kana: ["べんきょうちゅう"] }), "べんきょう")).toBe(1);
+    expect(matchTier(word("食べる", { kana: ["たべる"] }), "たべ")).toBe(1);
+    expect(matchTier(word("食べる", { kana: ["たべる"] }), "tabe")).toBe(1);
+    expect(matchTier(word("勉強部屋"), "勉強")).toBe(1);
+  });
+
+  it("is 0 when the query only appears inside a form", () => {
+    expect(matchTier(word("不勉強", { kana: ["ふべんきょう"] }), "べんきょう")).toBe(0);
+    expect(matchTier(word("勉強", { glossEn: ["study"] }), "stu")).toBe(0);
   });
 });
 
@@ -69,6 +77,16 @@ describe("rerank", () => {
       word("日本", { hanViet: ["nhật bổn", "nhật bản"], isCommon: true }),
     ];
     expect(heads(rerank(hits, "nhật bản"))).toEqual(["日本", "一般"]);
+  });
+
+  it("orders prefix matches common first, then shortest", () => {
+    const hits = [
+      word("ベニヤ板", { kana: ["ベニヤいた"], isCommon: true }),
+      word("食べ過ぎる", { kana: ["たべすぎる"], isCommon: true }),
+      word("食べ歩き", { kana: ["たべあるき"] }),
+      word("食べる", { kana: ["たべる"], isCommon: true }),
+    ];
+    expect(heads(rerank(hits, "たべ"))).toEqual(["食べる", "食べ過ぎる", "食べ歩き", "ベニヤ板"]);
   });
 
   it("keeps Meilisearch order as the final tie-break", () => {

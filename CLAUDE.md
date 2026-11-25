@@ -33,6 +33,7 @@ Tiến độ hiện tại: `docs/PROGRESS.md` (đọc đầu phiên, cập nhậ
 - Viết test cùng code (Vitest, file `*.test.ts` cạnh file nguồn) và chạy trước khi báo xong; không báo "xong" khi test, lint, typecheck hoặc build còn đỏ. Logic cần test đặt trong module thuần (không import DB / Meilisearch / `next/cache`), ví dụ `src/lib/ranking.ts`.
 - Kiểm chứng giao diện thật trên trình duyệt (desktop + 375px, sáng + tối) trước khi báo xong việc UI.
 - Một tính năng một nhánh một PR (CI: `.github/workflows/ci.yml` chạy lint, typecheck, test, build). Tạo PR cho việc quan trọng và để chủ repo tự merge; không tự merge. Commit nhỏ, thông điệp rõ.
+- Không xếp chồng PR (base phải là `main`): PR #3 từng merge vào nhánh cũ sau khi PR dưới đã vào `main`, nên code không tới `main`. Hai PR cùng sửa một file (vd. `docs/PROGRESS.md`) thì chờ PR trước merge, hoặc gom thay đổi tài liệu vào một PR riêng.
 - Commit và PR chỉ đứng tên chủ repo: KHÔNG thêm `Co-Authored-By` hay bất kỳ dòng ghi công AI / Claude Code nào.
 - Không đổi phạm vi: thấy việc ngoài yêu cầu thì ghi vào `docs/PROGRESS.md` (mục "Ý tưởng / việc phát sinh") thay vì tự làm.
 - Kiến thức có thể đã cũ (Next.js 16, Prisma 7/8, Meilisearch, Tailwind 4): kiểm chứng bằng tài liệu đi kèm trong `node_modules` hoặc lệnh chỉ đọc, và nói rõ chỗ chưa chắc.
