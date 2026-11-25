@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { MagnifyingGlassMinus } from "@phosphor-icons/react/dist/ssr";
+import { AiBadge } from "@/components/AiBadge";
 import { CommonBadge } from "@/components/CommonBadge";
 import { SearchBox } from "@/components/SearchBox";
 import { searchDictionary } from "@/lib/dictionary";
@@ -71,7 +72,7 @@ async function Results({ searchParams }: { searchParams: PageProps<"/tim-kiem">[
                 <p className="mt-1 text-sm text-muted-foreground">
                   <span className="text-xs">{posLabels(w.pos).slice(0, 2).join(" · ")}</span>
                   {w.pos.length > 0 && " — "}
-                  {w.preview}
+                  {w.preview} {w.aiPreview && <AiBadge label="AI" />}
                 </p>
               </Link>
             </li>
