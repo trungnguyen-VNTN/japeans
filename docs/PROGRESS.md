@@ -13,13 +13,11 @@
 - **Giai đoạn 2 – MVP tra cứu:** trang chủ, `/tim-kiem`, `/tu/[id]`, `/kanji`, `/kanji/[char]` (hoạt ảnh nét viết, bộ Khang Hy, thành phần, từ thông dụng). Design system ở `design-system/japeans/MASTER.md`. Lint, typecheck, `next build` xanh; đã kiểm tra trên trình duyệt (desktop, 375px, sáng, tối).
 
 ### Đang dở
-- Không có. Giai đoạn 1–2 đã commit và push lên `main` (692c93d, 5eb6a56, 58ff844).
+- PR `chore/vitest-ci`: Vitest (31 test cho Hán Việt, xếp hạng tìm kiếm, nhãn từ loại), tách logic xếp hạng ra `src/lib/ranking.ts`, CI GitHub Actions. Chờ chủ repo merge.
 
 ### Bước tiếp theo
-1. Thêm Vitest + test cho `src/lib/text.ts` (hanVietOf, stripVietnamese) và `rerank()` trong `dictionary.ts`.
-2. Giai đoạn 3: nghĩa tiếng Việt (dịch batch bằng AI → `Sense.glossVi`, `viReviewed = false`, ưu tiên ~10k từ thông dụng), mẹo nhớ kanji bằng AI (cache `AIContent`).
-3. Cấp JLPT N5–N1 cho từ và kanji (hiện chỉ có JLPT thang cũ của KANJIDIC). Cần chọn nguồn dữ liệu có license rõ.
-4. CI GitHub Actions (lint, typecheck, build, test).
+1. Giai đoạn 3: nghĩa tiếng Việt (dịch batch bằng AI → `Sense.glossVi`, `viReviewed = false`, ưu tiên ~10k từ thông dụng), mẹo nhớ kanji bằng AI (cache `AIContent`). Cần `ANTHROPIC_API_KEY` và ngân sách (xem câu hỏi mở).
+2. Cấp JLPT N5–N1 cho từ và kanji (hiện chỉ có JLPT thang cũ của KANJIDIC). Cần chọn nguồn dữ liệu có license rõ.
 
 ### Câu hỏi mở
 - Nguồn danh sách JLPT N-level nào chấp nhận được về license?
@@ -30,4 +28,4 @@
 - Autocomplete khi gõ trong ô tìm kiếm (debounce + dropdown).
 - Tra kanji theo bộ thủ (chọn nhiều thành phần) dựa trên RADKFILE.
 - Tên gọi tiếng Việt cho bộ thủ (`Radical.nameVi`, ví dụ "nhân đứng") cần biên soạn và duyệt.
-- Âm Hán Việt của 行 đang ưu tiên "HÀNG" do theo Unihan; cân nhắc danh sách ngoại lệ có duyệt.
+- Âm Hán Việt của 行 đang ưu tiên "HÀNG" do theo Unihan; 時 ra "THÌ" nên 学生時代 hiện "học sinh thì đại" (đúng: "thời đại"). Cân nhắc danh sách ngoại lệ có duyệt.
