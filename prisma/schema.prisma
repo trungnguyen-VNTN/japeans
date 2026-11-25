@@ -167,6 +167,9 @@ model AIContent {
 }
 
 enum AIContentType {
+  // Vietnamese meanings for a word; targetKey "word:<id>", content JSON {senses: [{order, vi: string[]}]}.
+  // Kept here (not only in Sense.glossVi) so re-importing JMdict does not lose paid translations.
+  WORD_GLOSS_VI
   KANJI_MNEMONIC
   KANJI_EXPLANATION
   WORD_USAGE

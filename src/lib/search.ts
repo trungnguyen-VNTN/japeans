@@ -17,6 +17,8 @@ export type WordDoc = {
   headword: string;
   reading: string;
   preview: string;
+  /** preview contains AI translations not yet reviewed (show an "AI" label). */
+  aiPreview: boolean;
   pos: string[];
 };
 

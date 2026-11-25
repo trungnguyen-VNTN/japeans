@@ -66,3 +66,37 @@ export function run(main: () => Promise<void>) {
     })
     .finally(() => db.$disconnect());
 }
+
+export type GlossViRow = { wordId: number; order: number; vi: string[]; reviewed: boolean };
+
+const SEP = "\u001f"; // unit separator: never appears in glosses
+
+/** Bulk-write Vietnamese meanings into Sense rows (one UPDATE per chunk via unnest). */
+export async function applyGlossVi(rows: GlossViRow[]) {
+  for (let i = 0; i < rows.length; i += 5000) {
+    const chunk = rows.slice(i, i + 5000);
+    await db.$executeRaw`
+      UPDATE "Sense" AS s
+      SET "glossVi" = string_to_array(v.vi, ${SEP}), "viReviewed" = v.reviewed
+      FROM unnest(
+        ${chunk.map((r) => r.wordId)}::int[],
+        ${chunk.map((r) => r.order)}::int[],
+        ${chunk.map((r) => r.vi.join(SEP))}::text[],
+        ${chunk.map((r) => r.reviewed)}::bool[]
+      ) AS v(word_id, ord, vi, reviewed)
+      WHERE s."wordId" = v.word_id AND s."order" = v.ord`;
+  }
+}
+
+/** Every stored Vietnamese translation (AIContent WORD_GLOSS_VI) as Sense rows to apply. */
+export async function storedGlossVi(): Promise<GlossViRow[]> {
+  const rows = await db.aIContent.findMany({
+    where: { type: "WORD_GLOSS_VI", status: { not: "REJECTED" } },
+    select: { targetKey: true, content: true, status: true },
+  });
+  return rows.flatMap((r) => {
+    const wordId = Number(r.targetKey.replace("word:", ""));
+    const { senses } = JSON.parse(r.content) as { senses: { order: number; vi: string[] }[] };
+    return senses.map((s) => ({ wordId, order: s.order, vi: s.vi, reviewed: r.status === "APPROVED" }));
+  });
+}

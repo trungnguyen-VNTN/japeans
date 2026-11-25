@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "AIContentType" ADD VALUE 'WORD_GLOSS_VI';

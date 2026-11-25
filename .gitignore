@@ -48,3 +48,6 @@ next-env.d.ts
 
 # raw dictionary downloads (JMdict, KANJIDIC2, ...)
 /data/raw/
+
+# Message Batches submitted by npm run ai:translate
+/data/ai-batches/

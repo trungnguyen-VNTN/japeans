@@ -1,6 +1,7 @@
 /** Builds the Meilisearch "words" and "kanji" indexes from Postgres. Re-runnable. */
 import "dotenv/config"; // must load before src/lib/search creates the client
 import { hanVietOf, stripVietnamese } from "../../src/lib/text";
+import { previewOf } from "../../src/lib/translation";
 import { KANJI_INDEX, meili, WORDS_INDEX, type KanjiDoc, type WordDoc } from "../../src/lib/search";
 import { db, run } from "./lib";
 
@@ -92,7 +93,8 @@ async function main() {
         isCommon: w.isCommon,
         headword: (!usuallyKana && kanjiTexts[0]) || w.readings[0]?.kana || "",
         reading: w.readings[0]?.kana ?? "",
-        preview: w.senses.slice(0, 3).map((s) => s.glossVi[0] ?? s.glossEn.slice(0, 2).join(", ")).join("; "),
+        preview: previewOf(w.senses),
+        aiPreview: w.senses.slice(0, 3).some((s) => s.glossVi.length > 0 && !s.viReviewed),
         pos: [...new Set(w.senses.flatMap((s) => s.partsOfSpeech))],
       });
     }

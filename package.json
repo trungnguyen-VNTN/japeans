@@ -20,9 +20,11 @@
     "data:import:words": "cross-env NODE_OPTIONS=--max-old-space-size=6144 tsx scripts/import/words.ts",
     "data:index": "cross-env NODE_OPTIONS=--max-old-space-size=6144 tsx scripts/import/search.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "ai:translate": "tsx scripts/ai/translate-glosses.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.14.0",
     "@next-auth/prisma-adapter": "^1.0.7",
     "@phosphor-icons/react": "^2.1.10",
     "@prisma/adapter-pg": "^7.10.1",
