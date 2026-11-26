@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { Sparkle } from "@phosphor-icons/react/dist/ssr";
+import { KanjiWritingPractice } from "@/components/KanjiWritingPractice";
 import { StrokeOrder } from "@/components/StrokeOrder";
 import { getKanji } from "@/lib/dictionary";
 import { gradeLabel } from "@/lib/labels";
@@ -70,6 +71,18 @@ async function KanjiDetail({ params }: { params: Params }) {
         </div>
         <StrokeOrder paths={k.strokes} character={k.character} />
       </header>
+
+      <section aria-labelledby="practice" className="space-y-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 id="practice" className="text-xl font-semibold text-card-foreground">
+            Luyện viết
+          </h2>
+          <p className="text-xs text-muted-foreground">Viết bằng chuột, ngón tay hoặc bút cảm ứng</p>
+        </div>
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <KanjiWritingPractice key={k.character} character={k.character} strokes={k.strokes} />
+        </div>
+      </section>
 
       <section aria-labelledby="parts" className="space-y-4">
         <h2 id="parts" className="text-xl font-semibold text-card-foreground">

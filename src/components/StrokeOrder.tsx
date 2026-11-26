@@ -48,7 +48,7 @@ export function StrokeOrder({ paths, character }: { paths: string[]; character: 
         className="flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-4 text-sm font-medium transition-colors hover:bg-muted"
       >
         <ArrowCounterClockwise size={18} aria-hidden />
-        Viết lại
+        Phát lại
       </button>
       <style>{`
         .stroke-draw { stroke-dasharray: 1; stroke-dashoffset: 1; opacity: 0; animation-name: draw; animation-timing-function: ease-in-out; animation-fill-mode: forwards; }
