@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { Quotes } from "@phosphor-icons/react/dist/ssr";
+import { Plus, Quotes } from "@phosphor-icons/react/dist/ssr";
 import { AiBadge } from "@/components/AiBadge";
 import { CommonBadge } from "@/components/CommonBadge";
 import { getWord } from "@/lib/dictionary";
@@ -73,7 +73,13 @@ async function WordDetail({ params }: { params: Params }) {
             </div>
           )}
         </div>
-        <p className="mt-2 text-sm text-muted-foreground">Romaji: {w.readings[0]?.romaji}</p>
+        <div className="mt-2 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">Romaji: {w.readings[0]?.romaji}</p>
+          <Link href={`/hoc-phan/them?tu=${w.id}`} className="btn-secondary">
+            <Plus size={18} aria-hidden />
+            Thêm vào học phần
+          </Link>
+        </div>
 
         {w.kanji.length > 0 && (
           <ul className="mt-6 flex flex-wrap gap-2" aria-label="Kanji trong từ">
