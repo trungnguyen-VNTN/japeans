@@ -21,7 +21,8 @@
     "data:index": "cross-env NODE_OPTIONS=--max-old-space-size=6144 tsx scripts/import/search.ts",
     "test": "vitest run",
     "test:watch": "vitest",
-    "ai:translate": "tsx scripts/ai/translate-glosses.ts"
+    "ai:translate": "tsx scripts/ai/translate-glosses.ts",
+    "eval:recognition": "tsx scripts/eval-recognition.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.14.0",

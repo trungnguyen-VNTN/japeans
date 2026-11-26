@@ -1,7 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { PencilSimpleLine } from "@phosphor-icons/react";
+import { HandwritingPad } from "@/components/HandwritingPad";
 import { moveActive, SUGGEST_DEBOUNCE_MS, suggestQuery } from "@/lib/autocomplete";
 
 type Suggestion = { id: number; headword: string; reading: string; hanViet: string | null; preview: string };
@@ -21,6 +23,9 @@ export function SearchInput({ defaultValue, large, autoFocus }: Props) {
   const [active, setActive] = useState(-1);
   // Only suggest after the user edits: a prefilled query (results page) should not pop a list.
   const [touched, setTouched] = useState(false);
+  const [padOpen, setPadOpen] = useState(false);
+  const padId = useId();
+  const penRef = useRef<HTMLButtonElement>(null);
 
   const query = touched ? suggestQuery(value) : null;
 
@@ -45,7 +50,12 @@ export function SearchInput({ defaultValue, large, autoFocus }: Props) {
   }, [query]);
 
   const items = query ? result.items : [];
-  const expanded = open && items.length > 0;
+  const expanded = open && !padOpen && items.length > 0;
+
+  function closePad() {
+    setPadOpen(false);
+    penRef.current?.focus();
+  }
 
   function choose(item: Suggestion) {
     setOpen(false);
@@ -99,6 +109,30 @@ export function SearchInput({ defaultValue, large, autoFocus }: Props) {
           large ? "h-12 text-lg" : "h-10 text-base"
         }`}
       />
+      <button
+        ref={penRef}
+        type="button"
+        onClick={() => setPadOpen((o) => !o)}
+        aria-expanded={padOpen}
+        aria-controls={padOpen ? padId : undefined}
+        aria-label={padOpen ? "Đóng bảng viết tay" : "Viết tay để tìm kanji"}
+        title="Viết tay"
+        className={`inline-flex shrink-0 cursor-pointer items-center justify-center rounded-lg transition-colors hover:bg-muted ${
+          large ? "size-12" : "size-10"
+        } ${padOpen ? "bg-muted text-primary" : "text-muted-foreground"}`}
+      >
+        <PencilSimpleLine size={large ? 24 : 20} aria-hidden />
+      </button>
+      {padOpen && (
+        <HandwritingPad
+          id={padId}
+          onClose={closePad}
+          onPick={(ch) => {
+            setValue((v) => v + ch);
+            setTouched(true);
+          }}
+        />
+      )}
       <p className="sr-only" role="status" aria-live="polite">
         {expanded ? `${items.length} gợi ý. Dùng phím mũi tên để chọn.` : ""}
       </p>
