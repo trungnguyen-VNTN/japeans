@@ -22,7 +22,7 @@ looked up directly from the CSVs (Python CLI not available on this machine). Pag
 | card / card-foreground | #FFFFFF / #1E1B4B | #171830 / #E0E7FF |
 | muted / muted-foreground | #EBEEF8 / #475569 | #22243F / #B4BCE0 |
 | border | #C7D2FE | #2E3156 |
-| destructive | #DC2626 | #F87171 |
+| destructive / on-destructive | #DC2626 / #FFFFFF | #F87171 / #450A0A |
 | ring | #4F46E5 | #818CF8 |
 
 Accent green on white must be used with white text only on solid fills ≥ 14px bold; for text on light
@@ -38,7 +38,7 @@ backgrounds use `text-accent-strong` (#15803D) to keep 4.5:1.
 ## Layout
 - Mobile-first; container `max-w-5xl`, gutter 16px (mobile) / 24px (≥768).
 - Spacing on 4/8 scale; section gap 32–48.
-- Header: logo + primary nav (Tra từ, Kanji, Học phần) + compact search on non-home pages. Sticky, z-20.
+- Header: logo + primary nav (Tra từ, Kanji, Học phần) + account slot. Sticky, z-20. Below `sm` the logo shows only its icon and nav items stack icon over an 11px label (no wrapping).
 - Detail pages: hero (headword/kanji) → facts → senses/components → examples → related.
 
 ## Components
@@ -48,6 +48,11 @@ backgrounds use `text-accent-strong` (#15803D) to keep 4.5:1.
   (accent, with text — never color only) + up to 3 meanings. Whole row is one link, hover = bg-muted.
 - Tag chips: rounded-full, 12–13px, muted background; POS labels in Vietnamese.
 - Empty state: message + suggestions (example queries).
+
+## Forms
+- Shared classes in `globals.css`: `.field-input`, `.btn-primary`, `.btn-secondary`, `.icon-btn` (44px targets, keep the global focus ring).
+- Visible labels, `*` + sr-only "(bắt buộc)" for required fields, error text under the field via `aria-describedby`, error summary (`role=alert`, focused) after a failed submit.
+- Destructive actions: two-step inline confirmation; solid button uses `bg-destructive text-on-destructive`.
 
 ## Icons
 Phosphor (`@phosphor-icons/react`; use `/dist/ssr` in Server Components), weight "regular", 20px in UI, 16px inline.

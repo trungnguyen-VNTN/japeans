@@ -16,6 +16,7 @@
   --muted-foreground: #475569;
   --border: #c7d2fe;
   --destructive: #dc2626;
+  --on-destructive: #ffffff;
   --ring: #4f46e5;
 }
 
@@ -35,6 +36,7 @@
     --muted-foreground: #b4bce0;
     --border: #2e3156;
     --destructive: #f87171;
+    --on-destructive: #450a0a;
     --ring: #818cf8;
   }
 }
@@ -54,6 +56,7 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+  --color-on-destructive: var(--on-destructive);
   --color-ring: var(--ring);
   --font-sans: var(--font-be-vietnam), "Noto Sans JP", system-ui, sans-serif;
   --font-jp: var(--font-noto-jp), "Hiragino Sans", "Yu Gothic", sans-serif;
@@ -85,5 +88,21 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* Shared form controls (study-set editor and later forms). */
+@layer components {
+  .field-input {
+    @apply block min-h-11 w-full rounded-lg border border-border bg-background px-3 text-base text-card-foreground transition-colors placeholder:text-muted-foreground/70 focus:border-primary aria-[invalid=true]:border-destructive;
+  }
+  .btn-primary {
+    @apply inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-lg bg-primary px-5 font-medium text-on-primary transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .btn-secondary {
+    @apply inline-flex min-h-11 cursor-pointer items-center gap-2 rounded-lg border border-border bg-card px-4 text-sm font-medium text-card-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .icon-btn {
+    @apply inline-flex size-11 cursor-pointer items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-30;
   }
 }
