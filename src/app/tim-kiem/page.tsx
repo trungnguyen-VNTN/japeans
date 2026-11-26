@@ -81,7 +81,7 @@ async function Results({ searchParams }: { searchParams: PageProps<"/tim-kiem">[
       </section>
 
       {kanji.length > 0 && (
-        <aside aria-labelledby="kanji-results" className="space-y-3">
+        <aside aria-labelledby="kanji-results" className="order-first space-y-3 md:order-none">
           <h2 id="kanji-results" className="text-lg font-semibold text-card-foreground">
             Kanji
           </h2>
